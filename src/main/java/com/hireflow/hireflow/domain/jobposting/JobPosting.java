@@ -30,8 +30,7 @@ public class JobPosting {
     @Column(nullable = false)
     private String location;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;      // 공고 원문
 
     @Column(nullable = false)
