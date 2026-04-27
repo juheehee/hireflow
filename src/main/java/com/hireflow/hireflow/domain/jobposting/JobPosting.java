@@ -1,5 +1,6 @@
 package com.hireflow.hireflow.domain.jobposting;
 
+import com.hireflow.hireflow.domain.jobposting.dto.JobPostingRequestDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,4 +47,13 @@ public class JobPosting {
     private String source;           // WANTED / SARAMIN / MANUAL
 
     private LocalDateTime crawledAt; // 직접입력(MANUAL)이면 null
+
+    public void update(JobPostingRequestDto dto) {
+        this.title = dto.getTitle();
+        this.company = dto.getCompany();
+        this.location = dto.getLocation();
+        this.description = dto.getDescription();
+        this.techStackTags = dto.getTechStackTags();
+        this.deadline = dto.getDeadline();
+    }
 }
