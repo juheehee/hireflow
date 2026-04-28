@@ -4,8 +4,10 @@ import com.hireflow.hireflow.domain.jobposting.dto.JobPostingRequestDto;
 import com.hireflow.hireflow.domain.jobposting.dto.JobPostingResponseDto;
 import com.hireflow.hireflow.domain.jobposting.service.JobPostingService;
 import com.hireflow.hireflow.global.common.ApiResponse;
+import com.hireflow.hireflow.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +27,9 @@ public class JobPostingController {
     }
 
     @GetMapping("/recommendations")
-    public ResponseEntity<ApiResponse<List<JobPostingResponseDto>>> getRecommendations() {
-        return ResponseEntity.ok(ApiResponse.success(jobPostingService.getRecommendations()));
+    public ResponseEntity<ApiResponse<List<JobPostingResponseDto>>> getRecommendations(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(jobPostingService.getRecommendations(userDetails.getId())));
     }
 
     @GetMapping("/{id}")
