@@ -23,10 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                         "유저를 찾을 수 없습니다: " + email
                 ));
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPasswordHash())
-                .roles("USER")
-                .build();
+        return new CustomUserDetails(user);
     }
 }
