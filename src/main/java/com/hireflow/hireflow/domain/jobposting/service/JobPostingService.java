@@ -6,6 +6,7 @@ import com.hireflow.hireflow.domain.jobposting.dto.JobPostingResponseDto;
 import com.hireflow.hireflow.domain.jobposting.repository.JobPostingRepository;
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
+import com.hireflow.hireflow.global.exception.NotFoundException;
 import com.hireflow.hireflow.infra.crawler.JobSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,7 +38,7 @@ public class JobPostingService {
 
     public JobPostingResponseDto getJobPosting(Long id) {
         JobPosting jp = jobPostingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("공고를 찾을 수 없습니다."));
         return new JobPostingResponseDto(jp);
     }
 
@@ -45,7 +46,7 @@ public class JobPostingService {
     @Cacheable(value = "recommendations", key = "'rec_' + #userId")
     public List<JobPostingResponseDto> getRecommendations(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다."));
 
         String userTechStack = user.getTechStack(); // 예: "Java,Spring,React"
 
@@ -99,7 +100,7 @@ public class JobPostingService {
     @CacheEvict(value = {"jobPostings", "recommendations"}, allEntries = true)
     public JobPostingResponseDto updateJobPosting(Long id, JobPostingRequestDto dto) {
         JobPosting jp = jobPostingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("공고를 찾을 수 없습니다."));
         jp.update(dto);
         return new JobPostingResponseDto(jp);
     }
@@ -109,7 +110,7 @@ public class JobPostingService {
     @CacheEvict(value = {"jobPostings", "recommendations"}, allEntries = true)
     public void deleteJobPosting(Long id) {
         jobPostingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("공고를 찾을 수 없습니다."));
         jobPostingRepository.deleteById(id);
     }
 }
