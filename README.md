@@ -1,13 +1,13 @@
 # HireFlow 🎯
 > AI 기반 채용 공고 매칭 및 지원 현황 관리 비서
 
-<br>
+&nbsp;
 ## 프로젝트 소개
 
 취업 준비생이 채용 공고를 직접 찾아다니며 스프레드시트로 관리하는 불편함을 해소하기 위해 만든 서비스입니다.  
 공고 크롤링 → AI 태그 추출 → 내 기술스택 기반 매칭 → 지원 현황 관리 → 마감/면접 알림까지 한 곳에서 처리합니다.
 
-<br>
+&nbsp;
 ## 주요 기능
 
 - **공고 자동 수집** : Jsoup + @Scheduled로 주기적 크롤링 (Wanted, 사람인)
@@ -16,7 +16,8 @@
 - **이력서 파싱** : PDF 업로드 → AI 파싱 → 기술스택 자동 업데이트 (비동기)
 - **지원 현황 관리** : 지원 등록 / 상태 변경 / 메모 / 면접 날짜 관리
 - **알림** : 마감 D-3 / 면접 D-1 / 파싱 완료 이메일 알림 (JavaMailSender)
-  <br>
+
+&nbsp;
 ## 기술 스택
 
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
@@ -41,7 +42,7 @@
 | Infra | Docker, AWS EC2, GitHub Actions |
 | Docs | Swagger (springdoc-openapi) |
 
-<br>
+&nbsp;
 ## 아키텍처
 
 ```
@@ -59,7 +60,7 @@
                     └── JavaMailSender (알림)
 ```
 
-<br>
+&nbsp;
 ## ERD
 
 | 테이블 | 설명 |
@@ -70,7 +71,7 @@
 | cover_letters | 자소서 작성 및 AI 첨삭 |
 | notifications | 마감/면접/파싱 완료 알림 |
 
-<br>
+&nbsp;
 ## 패키지 구조
 
 ```
@@ -94,7 +95,7 @@ com.hireflow.hireflow
     └── s3
 ```
 
-<br>
+&nbsp;
 ## API 명세
 
 Swagger : `http://localhost:8080/swagger-ui/index.html`
@@ -108,7 +109,7 @@ Swagger : `http://localhost:8080/swagger-ui/index.html`
 | CoverLetter | 4 |
 | Notification | 3 |
 
-<br>
+&nbsp;
 ## 실행 방법
 
 ```bash
@@ -126,7 +127,7 @@ MAIL_PASSWORD=...
 ./gradlew bootRun
 ```
 
-<br>
+&nbsp;
 ## 개발 기간 및 일정
 
 | 기간 | 내용 |
@@ -135,12 +136,26 @@ MAIL_PASSWORD=...
 | 2주차 | 핵심 기능 (지원 관리, S3, AI 파싱, 추천, 알림) |
 | 3주차 | 배포 (Docker, EC2, CI/CD, Swagger, README) |
 
-<br>
+&nbsp;
 ## 트러블슈팅
 
-> 구현하면서 겪은 문제들을 여기에 정리할 예정입니다.
+### @Lob + PostgreSQL oid 타입 매핑
+- `@Lob + String` 조합이 PostgreSQL에서 TEXT가 아닌 oid로 매핑됨
+- `@Column(columnDefinition = "TEXT")`로 교체
 
-<br>
+### Jsoup CSS Selector 불일치
+- 크롤링 HTML은 정상 수신되나 파싱 결과 0건
+- 사람인 HTML 구조 변경으로 selector 불일치 → F12로 확인 후 수정
+
+### JWT 필터 예외로 permitAll 경로 403
+- try-catch 없으면 토큰 없는 요청에서 필터 중단
+- doFilterInternal 전체 try-catch 처리
+
+### Redis LocalDate 직렬화 오류
+- GenericJackson2JsonRedisSerializer에 ObjectMapper 미주입
+- JavaTimeModule 등록한 ObjectMapper 직접 주입으로 해결
+
+&nbsp;
 ## Git Convention
 
 ### Commit Message
@@ -168,7 +183,7 @@ MAIL_PASSWORD=...
 | `feat/기능명` | 기능 개발 브랜치 |
 | `fix/버그명` | 버그 수정 브랜치 |
 
-<br>
+&nbsp;
 ---
 
 > 👩‍💻 개발자 : 이주희 · [GitHub](https://github.com/juheehee) · [Blog](https://bloggerddori.tistory.com/)
