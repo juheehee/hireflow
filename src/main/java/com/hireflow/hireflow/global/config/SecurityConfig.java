@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/auth/**"
                         ).permitAll()
+                        .requestMatchers("/api/applications/**").authenticated()  // 명시적 추가
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter,

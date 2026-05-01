@@ -26,8 +26,8 @@ public class Application {
     @Column(nullable = false)
     private String status; // APPLIED/DOC_PASS/INTERVIEW_1/INTERVIEW_2/FINAL_PASS/REJECTED
 
-    @Lob
-    private String memo;             // 커피챗, 과제전형 등 자유 기록
+    @Column(columnDefinition = "TEXT")
+    private String memo;            // 커피챗, 과제전형 등 자유 기록
 
     @Column(nullable = false)
     private LocalDate appliedAt;
