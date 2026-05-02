@@ -43,4 +43,19 @@ public class Application {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_posting_id", nullable = false)
     private JobPosting jobPosting;
+
+    public void updateStatus(String status) {
+        this.status = status;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateInterviewDate(LocalDate interviewDate) {
+        this.interviewDate = interviewDate;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
