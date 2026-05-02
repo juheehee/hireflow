@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,11 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobPostingRepository jobPostingRepository;
     private final UserRepository userRepository;
+
+    // 유효한 상태값 목록
+    private static final Set<String> VALID_STATES = Set.of(
+            "APPLIED", "DOC_PASS", "INTERVIEW_1", "INTERVIEW_2", "FINAL_PASS", "REJECTED"
+    );
 
     // 지원 등록
     @Transactional
@@ -67,5 +73,64 @@ public class ApplicationService {
         }
 
         return new ApplicationResponseDto(application);
+    }
+
+    // 상태 변경
+    @Transactional
+    public ApplicationResponseDto updateStatus(Long userId, Long applicationId, String status) {
+        if (!VALID_STATES.contains(status)) {
+            throw new BadRequestException("유효하지 않은 상태값입니다.");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("지원 내역을 찾을 수 없습니다."));
+
+        if (!application.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 지원 내역만 수정할 수 있습니다.");
+        }
+
+        application.updateStatus(status);
+        return new ApplicationResponseDto(application);
+    }
+
+    // 면접 날짜 등록
+    @Transactional
+    public ApplicationResponseDto updateInterviewDate(Long userId, Long applicationId, LocalDate interviewDate) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("지원 내역을 찾을 수 없습니다."));
+
+        if (!application.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 지원 내역만 수정할 수 있습니다.");
+        }
+
+        application.updateInterviewDate(interviewDate);
+        return new ApplicationResponseDto(application);
+    }
+
+    // 메모 수정
+    @Transactional
+    public ApplicationResponseDto updateMemo(Long userId, Long applicationId, String memo) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("지원 내역을 찾을 수 없습니다."));
+
+        if (!application.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 지원 내역만 수정할 수 있습니다.");
+        }
+
+        application.updateMemo(memo);
+        return new ApplicationResponseDto(application);
+    }
+
+    // 지원 삭제
+    @Transactional
+    public void deleteApplication(Long userId, Long applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("지원 내역을 찾을 수 없습니다."));
+
+        if (!application.getUser().getId().equals(userId)) {
+            throw new BadRequestException("본인의 지원 내역만 삭제할 수 있습니다.");
+        }
+
+        applicationRepository.delete(application);
     }
 }
