@@ -38,6 +38,7 @@ public class SecurityConfig {
                                 "/api/auth/**"
                         ).permitAll()
                         .requestMatchers("/api/applications/**").authenticated()  // 명시적 추가
+                        .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter,

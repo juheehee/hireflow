@@ -2,6 +2,11 @@ spring:
   application:
     name: hireflow
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   datasource:
     url: jdbc:postgresql://localhost:5432/hireflow
     username: ${DB_USERNAME}
@@ -39,15 +44,17 @@ jwt:
   access-token-expiration: 1800000    # 30분 (ms)
   refresh-token-expiration: 604800000 # 7일 (ms)
 
-#cloud:
-#  aws:
-#    s3:
-#      bucket: ${S3_BUCKET_NAME}
-#    credentials:
-#      access-key: ${AWS_ACCESS_KEY}
-#      secret-key: ${AWS_SECRET_KEY}
-#    region:
-#      static: ap-northeast-2
+cloud:
+  aws:
+    s3:
+      bucket: ${S3_BUCKET_NAME}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
 
 #openai:
 #  api:
