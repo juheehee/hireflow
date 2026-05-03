@@ -40,4 +40,10 @@ public class User {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    public void uploadResume(String resumeUrl) {
+        this.resumeUrl = resumeUrl;
+        this.resumeParseStatus = "PENDING";
+        this.updatedAt = LocalDateTime.now();
+    }
 }
