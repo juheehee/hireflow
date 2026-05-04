@@ -52,4 +52,9 @@ public class User {
         this.resumeParseStatus = "COMPLETED";
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void confirmTechStack(String techStack) {
+        this.techStack = techStack;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
