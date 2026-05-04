@@ -2,10 +2,12 @@ package com.hireflow.hireflow.domain.user.service;
 
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.dto.UserResponseDto;
+import com.hireflow.hireflow.domain.user.event.ResumeUploadedEvent;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.global.exception.NotFoundException;
 import com.hireflow.hireflow.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 내 프로필 조회
     public UserResponseDto getMe(Long userId) {
@@ -36,6 +39,9 @@ public class UserService {
 
         // User 엔티티에 URL + 상태 업데이트
         user.uploadResume(resumeUrl);
+
+        // 이벤트 발행 — 비동기로 파싱 시작
+        eventPublisher.publishEvent(new ResumeUploadedEvent(userId, resumeUrl));
 
         return new UserResponseDto(user);
     }

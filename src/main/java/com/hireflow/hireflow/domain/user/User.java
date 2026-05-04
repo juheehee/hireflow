@@ -46,4 +46,10 @@ public class User {
         this.resumeParseStatus = "PENDING";
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void completeResumeParsing(String parsedTechStack) {
+        this.techStack = parsedTechStack;
+        this.resumeParseStatus = "COMPLETED";
+        this.updatedAt = LocalDateTime.now();
+    }
 }
