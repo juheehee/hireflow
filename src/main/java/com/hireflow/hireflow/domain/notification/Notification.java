@@ -25,8 +25,7 @@ public class Notification {
     @Column(nullable = false)
     private String type; // DEADLINE_REMINDER / INTERVIEW_REMINDER / PARSE_COMPLETED
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
     @Column(nullable = false)
@@ -39,6 +38,6 @@ public class Notification {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id", nullable = false)
+    @JoinColumn(name = "application_id")
     private Application application;
 }
