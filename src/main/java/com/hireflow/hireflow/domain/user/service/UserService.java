@@ -1,6 +1,7 @@
 package com.hireflow.hireflow.domain.user.service;
 
 import com.hireflow.hireflow.domain.user.User;
+import com.hireflow.hireflow.domain.user.dto.TechStackConfirmRequestDto;
 import com.hireflow.hireflow.domain.user.dto.UserResponseDto;
 import com.hireflow.hireflow.domain.user.event.ResumeUploadedEvent;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
@@ -51,5 +52,13 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다."));
         return user.getResumeParseStatus();
+    }
+
+    @Transactional
+    public UserResponseDto confirmTechStack(Long userId, TechStackConfirmRequestDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다."));
+        user.confirmTechStack(dto.getTechStack());
+        return new UserResponseDto(user);
     }
 }

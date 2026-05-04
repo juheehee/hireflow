@@ -1,5 +1,6 @@
 package com.hireflow.hireflow.domain.user.controller;
 
+import com.hireflow.hireflow.domain.user.dto.TechStackConfirmRequestDto;
 import com.hireflow.hireflow.domain.user.dto.UserResponseDto;
 import com.hireflow.hireflow.domain.user.service.UserService;
 import com.hireflow.hireflow.global.common.ApiResponse;
@@ -41,5 +42,14 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.success(userService.getResumeParseStatus(userDetails.getId())));
+    }
+
+    // 파싱된 기술 스택 확정
+    @PatchMapping("/me/tech-stack/confirm")
+    public ResponseEntity<ApiResponse<UserResponseDto>> confirmTechStack(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody TechStackConfirmRequestDto dto) {
+        return ResponseEntity.ok(
+                ApiResponse.success(userService.confirmTechStack(userDetails.getId(), dto)));
     }
 }
