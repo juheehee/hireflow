@@ -29,7 +29,7 @@ public class Notification {
     private String message;
 
     @Column(nullable = false)
-    private boolean isRead; // DEFAULT false
+    private boolean read; // DEFAULT false
 
     private LocalDateTime sentAt;    // 발송 전 null, 발송 후 시각
 
@@ -40,4 +40,8 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id")
     private Application application;
+
+    public void markAsRead() {
+        this.read = true;
+    }
 }
