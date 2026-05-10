@@ -35,29 +35,22 @@ jobs:
             cd ~/hireflow
             git pull origin main
             ./gradlew bootJar -x test
-              
-            PID=$(pgrep -f 'hireflow.*jar')
-            if [ -n "$PID" ]; then
-              kill $PID
-              sleep 3
-            fi
-              
-            export DB_HOST="${{ secrets.DB_HOST }}"
-            export DB_PORT="${{ secrets.DB_PORT }}"
-            export DB_NAME="${{ secrets.DB_NAME }}"
-            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
-            export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
-            export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
-            export MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}"
-            export MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}"
-            export REDIS_HOST="${{ secrets.REDIS_HOST }}"
-            export S3_BUCKET="${{ secrets.S3_BUCKET }}"
             
-            nohup bash ~/hireflow/scripts/start.sh </dev/null &>/dev/null &
-            sleep 10
+            echo "DB_HOST=${{ secrets.DB_HOST }}" > /home/ec2-user/hireflow/.env
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> /home/ec2-user/hireflow/.env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> /home/ec2-user/hireflow/.env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> /home/ec2-user/hireflow/.env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ec2-user/hireflow/.env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ec2-user/hireflow/.env
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> /home/ec2-user/hireflow/.env
+            echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> /home/ec2-user/hireflow/.env
+            echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> /home/ec2-user/hireflow/.env
+            echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> /home/ec2-user/hireflow/.env
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> /home/ec2-user/hireflow/.env
+            echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> /home/ec2-user/hireflow/.env
+            echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> /home/ec2-user/hireflow/.env
+            
+            sudo systemctl restart hireflow
             
       - name: Discord 배포 성공 알림
         if: success()
