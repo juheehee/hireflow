@@ -1,0 +1,82 @@
+name: HireFlow CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar -x test
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/hireflow
+            git pull origin main
+            ./gradlew bootJar -x test
+            
+            # 기존 프로세스 종료
+            PID=$(pgrep -f 'hireflow.*jar')
+            if [ -n "$PID" ]; then
+              kill $PID
+              sleep 3
+            fi
+            
+            # 새 버전 실행
+            export DB_HOST="${{ secrets.DB_HOST }}"
+            export DB_PORT="${{ secrets.DB_PORT }}"
+            export DB_NAME="${{ secrets.DB_NAME }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+            export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
+            export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
+            export MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}"
+            export MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}"
+            export REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            export S3_BUCKET="${{ secrets.S3_BUCKET }}"
+            
+            nohup java -jar \
+              build/libs/hireflow-0.0.1-SNAPSHOT.jar \
+              > app.log 2>&1 &
+            
+            echo "Deployed successfully"
+            
+      - name: Discord 배포 성공 알림
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: "✅ HireFlow 배포 성공"
+          description: "main 브랜치 배포 완료"
+          color: 0x00ff00
+
+      - name: Discord 배포 실패 알림
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: "❌ HireFlow 배포 실패"
+          description: "Actions 탭에서 로그 확인하세요"
+          color: 0xff0000

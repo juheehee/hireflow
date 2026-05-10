@@ -1,6 +1,8 @@
 spring:
   application:
     name: hireflow
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   servlet:
     multipart:
@@ -48,7 +50,7 @@ jwt:
 cloud:
   aws:
     s3:
-      bucket: ${S3_BUCKET_NAME}
+      bucket: ${S3_BUCKET}
     credentials:
       access-key: ${AWS_ACCESS_KEY}
       secret-key: ${AWS_SECRET_KEY}
