@@ -62,6 +62,7 @@ jobs:
               > app.log 2>&1 &
             
             echo "Deployed successfully"
+            disown
             
       - name: Discord 배포 성공 알림
         if: success()
