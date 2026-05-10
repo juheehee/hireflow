@@ -40,3 +40,4 @@ replay_pid*.log
 .vscode/
 
 docker-compose.yml
+src/main/resources/application-prod.yml
