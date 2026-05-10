@@ -30,6 +30,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          request_pty: false
           script: |
             cd ~/hireflow
             git pull origin main
@@ -61,8 +62,9 @@ jobs:
               build/libs/hireflow-0.0.1-SNAPSHOT.jar \
               > app.log 2>&1 &
             
+            echo $! > app.pid
+            sleep 5
             echo "Deployed successfully"
-            disown
             
       - name: Discord 배포 성공 알림
         if: success()
