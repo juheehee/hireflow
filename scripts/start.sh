@@ -1,7 +1,5 @@
 #!/bin/bash
-source ~/hireflow/.env
-
-nohup java -jar \
+setsid java -jar \
   ~/hireflow/build/libs/hireflow-0.0.1-SNAPSHOT.jar \
   > ~/hireflow/app.log 2>&1 &
 
