@@ -10,7 +10,7 @@
 &nbsp;
 ## 주요 기능
 
-- **공고 자동 수집** : Jsoup + @Scheduled로 주기적 크롤링 (Wanted, 사람인)
+- **공고 자동 수집** : Jsoup + @Scheduled로 주기적 크롤링 (사람인)
 - **AI 태그 추출** : OpenAI API로 공고에서 기술스택 자동 추출
 - **공고 추천** : 내 기술스택 기반 Top 3 매칭 (Redis 캐싱)
 - **이력서 파싱** : PDF 업로드 → AI 파싱 → 기술스택 자동 업데이트 (비동기)
@@ -43,25 +43,80 @@
 | Docs | Swagger (springdoc-openapi) |
 
 &nbsp;
+## 기술 선택 이유
+
+| 기술 | 선택 이유                                                |
+|---|------------------------------------------------------|
+| Spring Boot | 풍부한 생태계와 자동 설정으로 빠른 개발 가능. DI/AOP 기반 구조로 관심사 분리와 테스트 용이성 확보                                                     |
+| PostgreSQL | 오픈소스 관계형 DB. JSON 컬럼, 전문 검색 등 확장성 우수. RDS로 관리 부담 최소화 |
+| Redis | 인메모리 기반 빠른 조회 + TTL 자동 만료. 공고 목록 캐싱으로 DB 부하 감소       |
+| JWT | Stateless 인증으로 서버 확장성 확보. 별도 세션 저장소 불필요              |
+| Jsoup | 경량 HTML 파싱 라이브러리. JS 렌더링 없는 사람인 크롤링에 적합              |
+| @Scheduled | 별도 스케줄러 서버 없이 Spring 내에서 크롤링 주기 관리 가능                |
+| ApplicationEventPublisher | 이력서 파싱을 비동기로 분리해 API 응답 지연 방지                        |
+| AWS S3 | 이력서 PDF 파일 저장에 적합한 오브젝트 스토리지. 직접 URL 접근 가능           |
+| Docker | 로컬/배포 환경 일관성 확보. docker-compose로 의존 서비스 한번에 실행       |
+| GitHub Actions | 코드 push 시 자동 빌드/배포. 별도 CI 서버 불필요                     |
+
+> 단일 서버 + 단일 서비스 구조라 Kubernetes/ArgoCD는 과한 선택.  
+> GitHub Actions + systemd 조합으로 충분한 자동화 달성.
+
+&nbsp;
 ## 아키텍처
 
+```mermaid
+flowchart TD
+    Client["🌐 Client"]
+    
+    subgraph EC2["AWS EC2"]
+        Filter["JWT Filter\n(Spring Security)"]
+        Controller["Controller Layer"]
+        Service["Service Layer"]
+        Repository["Repository Layer"]
+    end
+    
+    subgraph External["External Services"]
+        RDS["🗄️ PostgreSQL\n(AWS RDS)"]
+        Redis["⚡ Redis\n(ElastiCache)"]
+        S3["📦 AWS S3\n(이력서 PDF)"]
+        OpenAI["🤖 OpenAI API\n(AI 파싱/태그)"]
+        Mail["📧 JavaMailSender\n(알림)"]
+        Saramin["🔍 사람인\n(크롤링)"]
+    end
+
+    Scheduler["⏰ @Scheduled\nCrawler"]
+
+    Client -->|"HTTP Request"| Filter
+    Filter --> Controller
+    Controller --> Service
+    Service --> Repository
+    Repository --> RDS
+    Service -->|"캐싱"| Redis
+    Service -->|"PDF 저장"| S3
+    Service -->|"비동기 파싱"| OpenAI
+    Service -->|"알림 발송"| Mail
+    Scheduler -->|"06:00, 21:00 KST"| Saramin
+    Saramin -->|"공고 저장"| Service
 ```
-[Scheduler]
-    └── JobCrawlerService (Jsoup)
-            └── OpenAI API (tech_stack_tags 추출)
-                    └── job_postings 저장
- 
-[Client]
-    └── Spring Security + JWT Filter
-            └── Controller → Service → Repository
-                    ├── Redis (공고 목록 캐싱)
-                    ├── AWS S3 (이력서 PDF)
-                    ├── OpenAI API (이력서 파싱)
-                    └── JavaMailSender (알림)
+```mermaid
+flowchart LR
+    Dev["💻 개발자"] -->|"git push"| GitHub
+    GitHub -->|"trigger"| Actions["GitHub Actions"]
+    Actions -->|"SSH 접속"| EC2
+    Actions -->|"성공/실패"| Discord["Discord 알림"]
 ```
 
 &nbsp;
 ## ERD
+
+```mermaid
+erDiagram
+    USER ||--o{ APPLICATION : ""
+    USER ||--o{ NOTIFICATION : ""
+    JOB_POSTING ||--o{ APPLICATION : ""
+    APPLICATION ||--o{ NOTIFICATION : ""
+    APPLICATION ||--o{ COVER_LETTER : ""
+```
 
 | 테이블 | 설명 |
 |---|---|
@@ -98,32 +153,34 @@ com.hireflow.hireflow
 &nbsp;
 ## API 명세
 
-Swagger : `http://localhost:8080/swagger-ui/index.html`
+- **배포 주소** : http://43.202.137.232:8080
+- **Swagger** : http://43.202.137.232:8080/swagger-ui/index.html
 
 | 분류 | 엔드포인트 수 |
-|---|---|
-| Auth | 4 |
-| User | 5 |
-| JobPosting | 6 |
-| Application | 7 |
-| CoverLetter | 4 |
-| Notification | 3 |
+|---|---------|
+| Auth | 2       |
+| User | 5       |
+| JobPosting | 6       |
+| Application | 7       |
+| CoverLetter | 0       |
+| Notification | 3       |
 
 &nbsp;
-## 실행 방법
+## 로컬 실행 방법
 
 ```bash
-# 1. 환경변수 설정 (.env 또는 application-local.yml)
-DB_URL=jdbc:postgresql://localhost:5432/hireflow
-DB_USERNAME=postgres
-DB_PASSWORD=본인비번
-OPENAI_API_KEY=sk-...
-AWS_ACCESS_KEY=...
-AWS_SECRET_KEY=...
-MAIL_USERNAME=...
-MAIL_PASSWORD=...
- 
-# 2. 실행
+# 1. 아래 환경변수를 IntelliJ Run Configuration 또는 .env에 설정
+DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
+JWT_SECRET
+OPENAI_API_KEY
+AWS_ACCESS_KEY, AWS_SECRET_KEY, S3_BUCKET
+MAIL_USERNAME, MAIL_PASSWORD
+REDIS_HOST
+
+# 2. Docker로 로컬 DB/Redis 실행
+docker-compose up -d
+
+# 3. 앱 실행
 ./gradlew bootRun
 ```
 
@@ -140,20 +197,38 @@ MAIL_PASSWORD=...
 ## 트러블슈팅
 
 ### @Lob + PostgreSQL oid 타입 매핑
-- `@Lob + String` 조합이 PostgreSQL에서 TEXT가 아닌 oid로 매핑됨
-- `@Column(columnDefinition = "TEXT")`로 교체
+- **원인**: Hibernate + PostgreSQL 조합에서 `@Lob + String`이 TEXT가 아닌 oid(대용량 객체 포인터)로 매핑됨
+- **해결**: `@Lob` 제거 후 `@Column(columnDefinition = "TEXT")`로 타입 직접 지정
 
 ### Jsoup CSS Selector 불일치
-- 크롤링 HTML은 정상 수신되나 파싱 결과 0건
-- 사람인 HTML 구조 변경으로 selector 불일치 → F12로 확인 후 수정
+- **증상**: 크롤링 HTML은 정상 수신되나 파싱 결과 0건
+- **원인**: 사람인 HTML 구조 변경으로 selector `.item_recruit` 불일치
+- **해결**: F12로 실제 구조 확인 후 `li.item.lookup`, `span.corp`으로 수정
 
 ### JWT 필터 예외로 permitAll 경로 403
-- try-catch 없으면 토큰 없는 요청에서 필터 중단
-- doFilterInternal 전체 try-catch 처리
+- **원인**: `JwtAuthenticationFilter`에 try-catch 없어 토큰 없는 요청에서 필터 중단
+- **해결**: `doFilterInternal()` 전체 try-catch 처리, 예외 발생해도 다음 필터로 전달
 
 ### Redis LocalDate 직렬화 오류
-- GenericJackson2JsonRedisSerializer에 ObjectMapper 미주입
-- JavaTimeModule 등록한 ObjectMapper 직접 주입으로 해결
+- **원인**: `GenericJackson2JsonRedisSerializer`에 JavaTimeModule 등록한 ObjectMapper 미주입
+- **해결**: `new GenericJackson2JsonRedisSerializer(objectMapper)`로 직접 전달
+
+### spring-cloud-aws credentials 무시 문제
+- **증상**: 이력서 PDF 업로드 시 403 에러 — IAM 콘솔에서 Access Key `Never used` 확인
+- **원인**: spring-cloud-aws가 yml 설정을 무시하고 자체 credential chain 탐색. `AWS_ACCESS_KEY`와 SDK 표준 변수명 `AWS_ACCESS_KEY_ID` 불일치
+- **해결**: `S3Config`로 `S3Client` 직접 빈 등록, `AwsBasicCredentials.create()`로 강제 주입
+
+### ElastiCache 보안 그룹 미설정으로 Redis 연결 실패
+- **증상**: `GET /api/job-postings` 호출 시 500 에러
+- **원인**: ElastiCache에 보안 그룹이 없어 EC2 → Redis 6379 포트 접근 불가
+- **원인 2**: 전송 암호화 모드가 `필수 항목`으로 설정되어 TLS 없는 연결 차단
+- **해결**: EC2 보안 그룹을 ElastiCache에 연결 + 전송 암호화 모드를 `기본 설정`으로 변경
+
+### EC2 배포 후 앱 프로세스가 SSH 세션 종료 시 함께 종료
+- **증상**: CI/CD 배포 후 앱이 죽어서 Swagger 접근 불가
+- **원인**: appleboy/ssh-action이 세션 종료 시 SIGTERM을 자식 프로세스에 전달
+- **시도**: nohup / disown / setsid 모두 실패
+- **해결**: systemd 서비스로 등록 (`hireflow.service`) — SSH 세션과 완전히 독립적으로 동작
 
 &nbsp;
 ## Git Convention
