@@ -49,7 +49,7 @@
 |---|------------------------------------------------------|
 | Spring Boot | 풍부한 생태계와 자동 설정으로 빠른 개발 가능. DI/AOP 기반 구조로 관심사 분리와 테스트 용이성 확보                                                     |
 | PostgreSQL | 오픈소스 관계형 DB. JSON 컬럼, 전문 검색 등 확장성 우수. RDS로 관리 부담 최소화 |
-| Redis | 인메모리 기반 빠른 조회 + TTL 자동 만료. 공고 목록 캐싱으로 DB 부하 감소       |
+| Redis | 인메모리 기반 빠른 조회 + TTL 자동 만료. 공고 목록/추천 API에 @Cacheable 적용 (TTL 10분). EC2-RDS 동일 VPC 구성으로 절대적 응답시간 차이는 작으나 DB 커넥션 풀 절약 및 쿼리 실행 비용 감소 목적. 데이터 규모 증가 시 효과 극대화       |
 | JWT | Stateless 인증으로 서버 확장성 확보. 별도 세션 저장소 불필요              |
 | Jsoup | 경량 HTML 파싱 라이브러리. JS 렌더링 없는 사람인 크롤링에 적합              |
 | @Scheduled | 별도 스케줄러 서버 없이 Spring 내에서 크롤링 주기 관리 가능                |
@@ -95,7 +95,7 @@ flowchart TD
     Service -->|"PDF 저장"| S3
     Service -->|"비동기 파싱"| OpenAI
     Service -->|"알림 발송"| Mail
-    Scheduler -->|"06:00, 21:00 KST"| Saramin
+    Scheduler -->|"06:00, 12:00 KST"| Saramin
     Saramin -->|"공고 저장"| Service
 ```
 ```mermaid
