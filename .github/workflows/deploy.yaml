@@ -49,6 +49,7 @@ jobs:
             echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> /home/ec2-user/hireflow/.env
             echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> /home/ec2-user/hireflow/.env
             echo "S3_BUCKET=${{ secrets.S3_BUCKET }}" >> /home/ec2-user/hireflow/.env
+            echo "SPRING_PROFILES_ACTIVE=prod" >> /home/ec2-user/hireflow/.env
             
             sudo systemctl restart hireflow
             
