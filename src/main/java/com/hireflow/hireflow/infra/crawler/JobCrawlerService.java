@@ -2,6 +2,7 @@ package com.hireflow.hireflow.infra.crawler;
 
 import com.hireflow.hireflow.domain.jobposting.JobPosting;
 import com.hireflow.hireflow.domain.jobposting.repository.JobPostingRepository;
+import com.hireflow.hireflow.infra.ai.OpenAiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 public class JobCrawlerService {
 
     private final JobPostingRepository jobPostingRepository;
+    private final OpenAiService openAiService;
 
     @Scheduled(cron = "0 0 6,12 * * *")
     public void crawlSaramin() {
@@ -50,6 +52,7 @@ public class JobCrawlerService {
                     String sourceUrl  = "https://www.saramin.co.kr" +
                             job.select("a[href*=relay/view]").attr("href");
 
+                    // 유효성 검사
                     if (title.isBlank() || company.isBlank() || sourceUrl.isBlank()) {
                         continue;
                     }
@@ -60,12 +63,19 @@ public class JobCrawlerService {
                         continue;
                     }
 
+                    String techStackTags = "";
+                    try {
+                        techStackTags = openAiService.parseResumeToTechStack(title + " " + company);
+                    } catch (Exception e) {
+                        log.warn("[크롤러] OpenAI 태그 추출 실패 — {}", e.getMessage());
+                    }
+
                     JobPosting posting = JobPosting.builder()
                             .title(title)
                             .company(company)
                             .location(location)
                             .description("")          // 상세 파싱은 MVP 이후
-                            .techStackTags("")        // OpenAI 연동 후 채워짐 (Day 11)
+                            .techStackTags(techStackTags)
                             .deadline(LocalDate.now().plusDays(30))  // 임시값
                             .sourceUrl(sourceUrl)
                             .source(JobSource.SARAMIN)
