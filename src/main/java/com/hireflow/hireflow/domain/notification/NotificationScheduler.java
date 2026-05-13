@@ -20,7 +20,7 @@ public class NotificationScheduler {
     private final NotificationRepository notificationRepository;
     private final MailService mailService;
 
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 45 16 * * *")
     public void sendDeadlineReminders() {
         LocalDate targetDate = LocalDate.now().plusDays(3);
         // targetDate로 지원 목록 조회
