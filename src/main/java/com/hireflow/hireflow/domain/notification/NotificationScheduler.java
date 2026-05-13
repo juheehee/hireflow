@@ -7,12 +7,14 @@ import com.hireflow.hireflow.infra.mail.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
+@Transactional
 @RequiredArgsConstructor
 public class NotificationScheduler {
 
@@ -50,7 +52,7 @@ public class NotificationScheduler {
         }
     }
 
-    @Scheduled(cron = "0 10 18 * * *")
+    @Scheduled(cron = "0 45 18 * * *")
     public void sendInterviewReminders() {
         LocalDate targetDate = LocalDate.now().plusDays(1);
         // targetDate로 지원 목록 조회
