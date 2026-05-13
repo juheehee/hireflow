@@ -52,7 +52,7 @@ public class NotificationScheduler {
         }
     }
 
-    @Scheduled(cron = "0 45 18 * * *")
+    @Scheduled(cron = "0 0 9 * * *")
     public void sendInterviewReminders() {
         LocalDate targetDate = LocalDate.now().plusDays(1);
         // targetDate로 지원 목록 조회
