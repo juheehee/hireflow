@@ -230,6 +230,15 @@ docker-compose up -d
 - **시도**: nohup / disown / setsid 모두 실패
 - **해결**: systemd 서비스로 등록 (`hireflow.service`) — SSH 세션과 완전히 독립적으로 동작
 
+### EC2 타임존 미설정으로 크롤러 실행 시간 불일치
+- **원인**: EC2 기본 타임존이 UTC라 `cron = "0 0 9 * * *"`이 KST 18:00에 실행됨
+- **해결**: `sudo timedatectl set-timezone Asia/Seoul` 후 systemctl restart
+
+### @Transactional 누락으로 스케줄러 Lazy Loading 실패
+- **증상**: 면접 D-1 알림 스케줄러 실행 시 `HibernateProxy.getEmail()` 에러, 메일 미발송
+- **원인**: `@Scheduled` 메서드는 기본적으로 트랜잭션이 없어 Lazy Loading 시도 시 DB 연결 불가
+- **해결**: `sendDeadlineReminders()`, `sendInterviewReminders()`에 `@Transactional` 추가
+
 &nbsp;
 ## Git Convention
 
