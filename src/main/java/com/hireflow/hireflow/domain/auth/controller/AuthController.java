@@ -1,8 +1,6 @@
 package com.hireflow.hireflow.domain.auth.controller;
 
-import com.hireflow.hireflow.domain.auth.dto.LoginRequest;
-import com.hireflow.hireflow.domain.auth.dto.LoginResponse;
-import com.hireflow.hireflow.domain.auth.dto.SignupRequest;
+import com.hireflow.hireflow.domain.auth.dto.*;
 import com.hireflow.hireflow.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,5 +41,27 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(com.hireflow.hireflow.global.common.ApiResponse.success(response));
+    }
+
+    @Operation(summary = "토큰 재발급", description = "refreshToken으로 새 accessToken 발급.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "accessToken 재발급 성공"),
+            @ApiResponse(responseCode = "400", description = "유효하지 않은 refreshToken")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<com.hireflow.hireflow.global.common.ApiResponse<RefreshResponse>> refresh(
+            @RequestBody RefreshRequest request) {
+        String newAccessToken = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(com.hireflow.hireflow.global.common.ApiResponse.success(
+                new RefreshResponse(newAccessToken)));
+    }
+
+    @Operation(summary = "로그아웃", description = "refreshToken을 Redis에서 삭제. 이후 해당 refreshToken으로 재발급 불가.")
+    @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+    @PostMapping("/logout")
+    public ResponseEntity<com.hireflow.hireflow.global.common.ApiResponse<Void>> logout(
+            @RequestBody RefreshRequest request) {
+        authService.logout(request.getRefreshToken());
+        return ResponseEntity.ok(com.hireflow.hireflow.global.common.ApiResponse.success(null));
     }
 }
