@@ -45,18 +45,18 @@
 &nbsp;
 ## 기술 선택 이유
 
-| 기술 | 선택 이유                                                |
-|---|------------------------------------------------------|
-| Spring Boot | 풍부한 생태계와 자동 설정으로 빠른 개발 가능. DI/AOP 기반 구조로 관심사 분리와 테스트 용이성 확보                                                     |
-| PostgreSQL | 오픈소스 관계형 DB. JSON 컬럼, 전문 검색 등 확장성 우수. RDS로 관리 부담 최소화 |
-| Redis | 인메모리 기반 빠른 조회 + TTL 자동 만료. 공고 목록/추천 API에 @Cacheable 적용 (TTL 10분). EC2-RDS 동일 VPC 구성으로 절대적 응답시간 차이는 작으나 DB 커넥션 풀 절약 및 쿼리 실행 비용 감소 목적. 데이터 규모 증가 시 효과 극대화       |
-| JWT | Stateless 인증으로 서버 확장성 확보. 별도 세션 저장소 불필요              |
-| Jsoup | 경량 HTML 파싱 라이브러리. JS 렌더링 없는 사람인 크롤링에 적합              |
-| @Scheduled | 별도 스케줄러 서버 없이 Spring 내에서 크롤링 주기 관리 가능                |
-| ApplicationEventPublisher | 이력서 파싱을 비동기로 분리해 API 응답 지연 방지                        |
-| AWS S3 | 이력서 PDF 파일 저장에 적합한 오브젝트 스토리지. 직접 URL 접근 가능           |
-| Docker | 로컬/배포 환경 일관성 확보. docker-compose로 의존 서비스 한번에 실행       |
-| GitHub Actions | 코드 push 시 자동 빌드/배포. 별도 CI 서버 불필요                     |
+| 기술 | 선택 이유                                                                                                                                                     |
+|---|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Spring Boot | 풍부한 생태계와 자동 설정으로 빠른 개발 가능. DI/AOP 기반 구조로 관심사 분리와 테스트 용이성 확보                                                                                               |
+| PostgreSQL | 오픈소스 관계형 DB. JSON 컬럼, 전문 검색 등 확장성 우수. RDS로 관리 부담 최소화                                                                                                      |
+| Redis | 인메모리 기반 빠른 조회 + TTL 자동 만료. 공고 목록/추천 API에 @Cacheable 적용 (TTL 10분). EC2-RDS 동일 VPC 구성으로 절대적 응답시간 차이는 작으나 DB 커넥션 풀 절약 및 쿼리 실행 비용 감소 목적. 데이터 규모 증가 시 효과 극대화. refreshToken 화이트리스트 저장으로 로그아웃 구현. JWT의 stateless 한계를 Redis로 보완 |
+| JWT | Stateless 인증으로 서버 확장성 확보. 별도 세션 저장소 불필요                                                                                                                   |
+| Jsoup | 경량 HTML 파싱 라이브러리. JS 렌더링 없는 사람인 크롤링에 적합                                                                                                                   |
+| @Scheduled | 별도 스케줄러 서버 없이 Spring 내에서 크롤링 주기 관리 가능                                                                                                                     |
+| ApplicationEventPublisher | 이력서 파싱을 비동기로 분리해 API 응답 지연 방지                                                                                                                             |
+| AWS S3 | 이력서 PDF 파일 저장에 적합한 오브젝트 스토리지. 직접 URL 접근 가능                                                                                                                |
+| Docker | 로컬/배포 환경 일관성 확보. docker-compose로 의존 서비스 한번에 실행                                                                                                            |
+| GitHub Actions | 코드 push 시 자동 빌드/배포. 별도 CI 서버 불필요                                                                                                                          |
 
 > 단일 서버 + 단일 서비스 구조라 Kubernetes/ArgoCD는 과한 선택.  
 > GitHub Actions + systemd 조합으로 충분한 자동화 달성.
@@ -158,8 +158,9 @@ com.hireflow.hireflow
 
 | 분류 | 엔드포인트 수 |
 |---|---------|
-| Auth | 2       |
+| Auth | 4       |
 | User | 5       |
+| Actuator | 1       |
 | JobPosting | 6       |
 | Application | 7       |
 | CoverLetter | 0       |
