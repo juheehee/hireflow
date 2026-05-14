@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 "/api/job-postings/**",
                                 "/v3/api-docs/**",
                                 "/api/auth/**",
-                                "/actuator/health"
+                                "/actuator/**"
                         ).permitAll()
                         .requestMatchers("/api/applications/**").authenticated()  // 명시적 추가
                         .requestMatchers("/api/users/**").authenticated()
