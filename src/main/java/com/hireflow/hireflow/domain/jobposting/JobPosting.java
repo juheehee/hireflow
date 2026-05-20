@@ -56,4 +56,12 @@ public class JobPosting {
         this.techStackTags = dto.getTechStackTags();
         this.deadline = dto.getDeadline();
     }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void updateTechStackTags(String techStackTags) {
+        this.techStackTags = techStackTags;
+    }
 }

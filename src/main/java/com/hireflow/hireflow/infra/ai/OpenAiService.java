@@ -25,6 +25,42 @@ public class OpenAiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    public String extractTechStackFromJobPosting(String title, String company, String description) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        String content = description.isBlank()
+                ? title + " " + company
+                : title + " " + company + "\n" + description;
+
+        String prompt = """
+                아래는 채용공고 정보입니다.
+                이 공고에서 요구하는 기술 스택만 추출해서 쉼표로 구분된 문자열로 반환해주세요.
+                예시: Java, Spring Boot, PostgreSQL, Redis
+                다른 설명 없이 기술 스택 목록만 반환해주세요.
+                
+                채용공고:
+                %s
+                """.formatted(content);
+
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "messages", List.of(
+                        Map.of("role", "user", "content", prompt)
+                ),
+                "max_tokens", 200
+        );
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, request, Map.class);
+
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+        return message.get("content").toString().trim();
+    }
+
     public String parseResumeToTechStack(String resumeText) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
