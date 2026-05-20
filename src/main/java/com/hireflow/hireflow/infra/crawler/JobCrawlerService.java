@@ -11,8 +11,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -23,6 +25,7 @@ public class JobCrawlerService {
     private final OpenAiService openAiService;
 
     @Scheduled(cron = "0 0 6,12 * * *")
+    @Transactional
     public void crawlSaramin() {
         log.info("[크롤러] 사람인 크롤링 시작");
 
@@ -49,6 +52,39 @@ public class JobCrawlerService {
                     // location — ul.desc 안에서 첫번째 li (근무지)
                     String location = job.select("ul.desc li").first() != null
                             ? job.select("ul.desc li").first().text() : "";
+
+                    LocalDate deadline = LocalDate.now().plusDays(30); // 기본값
+                    Element dateEl = job.selectFirst("span.date");
+                    if (dateEl != null) {
+                        try {
+                            String dateText = dateEl.text().trim();
+
+                            if (dateText.contains("내일")) {
+                                deadline = LocalDate.now().plusDays(1);
+                            } else if (dateText.contains("오늘")) {
+                                deadline = LocalDate.now();
+                            } else if (dateText.matches(".*D-\\d+.*")) {
+                                // "D-4" → 4일 후
+                                int days = Integer.parseInt(dateText.replaceAll(".*D-(\\d+).*", "$1"));
+                                deadline = LocalDate.now().plusDays(days);
+                            } else if (dateText.contains("~")) {
+                                // "~05.31(일)" → 날짜 파싱
+                                String cleaned = dateText
+                                        .replaceAll("~", "")
+                                        .replaceAll("\\(.*\\)", "")
+                                        .trim();
+                                String[] parts = cleaned.split("\\.");
+                                int month = Integer.parseInt(parts[0]);
+                                int day = Integer.parseInt(parts[1]);
+                                int year = LocalDate.now().getYear();
+                                if (month < LocalDate.now().getMonthValue()) year++;
+                                deadline = LocalDate.of(year, month, day);
+                            }
+                        } catch (Exception e) {
+                            log.warn("[크롤러] 마감일 파싱 실패 — {}", e.getMessage());
+                        }
+                    }
+
                     String sourceUrl  = "https://www.saramin.co.kr" +
                             job.select("a[href*=relay/view]").attr("href");
 
@@ -63,9 +99,11 @@ public class JobCrawlerService {
                         continue;
                     }
 
+                    String description = parseDescription(sourceUrl);
+
                     String techStackTags = "";
                     try {
-                        techStackTags = openAiService.parseResumeToTechStack(title + " " + company);
+                        techStackTags = openAiService.extractTechStackFromJobPosting(title, company, description);
                     } catch (Exception e) {
                         log.warn("[크롤러] OpenAI 태그 추출 실패 — {}", e.getMessage());
                     }
@@ -74,9 +112,9 @@ public class JobCrawlerService {
                             .title(title)
                             .company(company)
                             .location(location)
-                            .description("")          // 상세 파싱은 MVP 이후
+                            .description(description)
                             .techStackTags(techStackTags)
-                            .deadline(LocalDate.now().plusDays(30))  // 임시값
+                            .deadline(deadline)
                             .sourceUrl(sourceUrl)
                             .source(JobSource.SARAMIN)
                             .crawledAt(java.time.LocalDateTime.now())
@@ -94,6 +132,63 @@ public class JobCrawlerService {
 
         } catch (Exception e) {
             log.error("[크롤러] 사람인 접속 실패 — {}", e.getMessage());
+        }
+    }
+
+    @Scheduled(cron = "0 30 6,12 * * *")
+    @Transactional
+    public void updateMissingDescriptions() {
+        log.info("[배치] description 없는 공고 업데이트 시작");
+
+        List<JobPosting> targets = jobPostingRepository
+                .findByDescriptionIsEmptyAndSourceNot(JobSource.MANUAL);
+
+        int updated = 0;
+        for (JobPosting posting : targets) {
+            String description = parseDescription(posting.getSourceUrl());
+            if (!description.isBlank()) {
+                posting.updateDescription(description);
+
+                // description 있으면 techStackTags도 재추출
+                try {
+                    String tags = openAiService.extractTechStackFromJobPosting(
+                            posting.getTitle(), posting.getCompany(), description);
+                    posting.updateTechStackTags(tags);
+                } catch (Exception e) {
+                    log.warn("[배치] OpenAI 태그 재추출 실패 - {}", e.getMessage());
+                }
+                updated++;
+            }
+
+            // 사람인 부하 방지
+            try {Thread.sleep(500);} catch (InterruptedException ignored) {}
+        }
+
+        log.info("[배치] 완료 - {}건 업데이트", updated);
+    }
+
+    private String parseDescription(String sourceUrl) {
+        try {
+            // rec_idx 추출
+            String recIdx = sourceUrl.contains("rec_idx=")
+                    ? sourceUrl.split("rec_idx=")[1].split("&")[0]
+                    : "";
+            if (recIdx.isBlank()) return "";
+
+            String iframeUrl = "https://www.saramin.co.kr/zf_user/jobs/relay/view-detail"
+                    + "?rec_idx=" + recIdx + "&rec_seq=0";
+
+            Document iframeDoc = Jsoup.connect(iframeUrl)
+                    .userAgent("Mozilla/5.0 (windows NT 10.0; Win64; x64) " +
+                            "AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36")
+                    .timeout(10_000)
+                    .get();
+
+            String text = iframeDoc.body().text();
+            return text.length() > 1000 ? text.substring(0, 1000) : text;
+        } catch (Exception e) {
+            log.warn("[크롤러] description 파싱 실패 - {}", e.getMessage());
+            return "";
         }
     }
 }

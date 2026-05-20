@@ -14,6 +14,8 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
 
     List<JobPosting> findByTechStackTagsContaining(String tech);
 
+    List<JobPosting> findByDescriptionIsEmptyAndSourceNot(String source);
+
     @Query("SELECT j FROM JobPosting j WHERE " +
             "(:keyword IS NULL OR j.title LIKE %:keyword% OR j.company LIKE %:keyword%) AND " +
             "(:tech IS NULL OR j.techStackTags LIKE %:tech%)")
