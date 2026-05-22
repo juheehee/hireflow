@@ -33,8 +33,14 @@ public class JobCrawlerService {
 
         try {
             String url = "https://www.saramin.co.kr/zf_user/jobs/list/job-category" +
-                    "?cat_kewd=84&panel_type=&search_optional_item=n" +
-                    "&search_done=y&panel_count=y&preview=y";
+                    "?page=1&cat_kewd=84&tab_type=all&search_optional_item=n" +
+                    "&search_done=y&panel_count=y&isAjaxRequest=0&page_count=50" +
+                    "&sort=RL&type=job-category&is_param=1&isSearchResultEmpty=1" +
+                    "&isSectionHome=0&searchParamCount=1";
+
+//            String url = "https://www.saramin.co.kr/zf_user/jobs/list/job-category" +
+//                    "?cat_kewd=84&panel_type=&search_optional_item=n" +
+//                    "&search_done=y&panel_count=y&preview=y";
 
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
@@ -48,12 +54,9 @@ public class JobCrawlerService {
                     .timeout(10_000)
                     .get();
 
-            Elements jobs = doc.select("li.item.lookup");
+            Elements jobs = doc.select("div.list_item");  // 사람인 (백엔드/ 서버 개발) 전체 채용 정보 리스트
             log.info("[크롤러] 공고 카드 수: {}", jobs.size());
-
-//            Elements jobs = doc.select("div.list_item");  // 사람인 (백엔드/ 서버 개발) 전체 채용 정보 리스트
-//            log.info("[크롤러] 공고 카드 수: {}", jobs.size());
-//            log.info("[크롤러] HTML 일부: {}", doc.body().html().substring(0, 2000));
+            log.info("[크롤러] HTML 일부: {}", doc.body().html().substring(0, 2000));
 
             int saved = 0;
             int skipped = 0;
