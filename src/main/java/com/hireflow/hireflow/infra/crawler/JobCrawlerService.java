@@ -40,18 +40,19 @@ public class JobCrawlerService {
                     .timeout(10_000)
                     .get();
 
-            Elements jobs = doc.select("li.item.lookup");  // 사람인 공고 카드 selector
+            Elements jobs = doc.select("div.list_item");  // 사람인 (백엔드/ 서버 개발) 전체 채용 정보 리스트
 
             int saved = 0;
             int skipped = 0;
 
             for (Element job : jobs) {
                 try {
-                    String title      = job.select("a[href*=relay/view]").attr("title");
-                    String company  = job.select("span.corp").text();
-                    // location — ul.desc 안에서 첫번째 li (근무지)
-                    String location = job.select("ul.desc li").first() != null
-                            ? job.select("ul.desc li").first().text() : "";
+                    String title = job.selectFirst("div.job_tit a") != null
+                            ? job.selectFirst("div.job_tit a").attr("title") : "";
+                    String company = job.selectFirst("div.company_nm .str_tit") != null
+                            ? job.selectFirst("div.company_nm .str_tit").text() : "";
+                    String location = job.selectFirst("p.work_place") != null
+                            ? job.selectFirst("p.work_place").text() : "";
 
                     LocalDate deadline = LocalDate.now().plusDays(30); // 기본값
                     Element dateEl = job.selectFirst("span.date");
@@ -85,8 +86,9 @@ public class JobCrawlerService {
                         }
                     }
 
-                    String sourceUrl  = "https://www.saramin.co.kr" +
-                            job.select("a[href*=relay/view]").attr("href");
+                    String sourceUrl  = job.selectFirst("div.job_tit a") != null
+                            ? "https://www.saramin.co.kr" + job.selectFirst("div.job_tit a").attr("href")
+                            : "";
 
                     // 유효성 검사
                     if (title.isBlank() || company.isBlank() || sourceUrl.isBlank()) {
