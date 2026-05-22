@@ -48,9 +48,12 @@ public class JobCrawlerService {
                     .timeout(10_000)
                     .get();
 
-            Elements jobs = doc.select("div.list_item");  // 사람인 (백엔드/ 서버 개발) 전체 채용 정보 리스트
+            Elements jobs = doc.select("li.item.lookup");
             log.info("[크롤러] 공고 카드 수: {}", jobs.size());
-            log.info("[크롤러] HTML 일부: {}", doc.body().html().substring(0, 2000));
+
+//            Elements jobs = doc.select("div.list_item");  // 사람인 (백엔드/ 서버 개발) 전체 채용 정보 리스트
+//            log.info("[크롤러] 공고 카드 수: {}", jobs.size());
+//            log.info("[크롤러] HTML 일부: {}", doc.body().html().substring(0, 2000));
 
             int saved = 0;
             int skipped = 0;
