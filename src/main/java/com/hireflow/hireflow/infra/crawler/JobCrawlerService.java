@@ -9,6 +9,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class JobCrawlerService {
 
     @Scheduled(cron = "0 0 6,12 * * *")
     @Transactional
+    @CacheEvict(value = {"jobPostings", "recommendations"}, allEntries = true)
     public void crawlSaramin() {
         log.info("[크롤러] 사람인 크롤링 시작");
 
