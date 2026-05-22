@@ -4,6 +4,7 @@ import com.hireflow.hireflow.domain.jobposting.dto.JobPostingRequestDto;
 import com.hireflow.hireflow.domain.jobposting.dto.JobPostingResponseDto;
 import com.hireflow.hireflow.domain.jobposting.service.JobPostingService;
 import com.hireflow.hireflow.global.security.CustomUserDetails;
+import com.hireflow.hireflow.infra.crawler.JobCrawlerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,6 +24,7 @@ import java.util.List;
 public class JobPostingController {
 
     private final JobPostingService jobPostingService;
+    private final JobCrawlerService jobCrawlerService;
 
     @Operation(summary = "공고 목록 조회", description = "키워드/기술스택으로 공고를 검색합니다. 결과는 Redis에 10분간 캐싱됩니다. 비로그인도 가능.")
     @ApiResponses({
@@ -90,5 +92,12 @@ public class JobPostingController {
             @PathVariable Long id) {
         jobPostingService.deleteJobPosting(id);
         return ResponseEntity.ok(com.hireflow.hireflow.global.common.ApiResponse.success(null));
+    }
+
+    @Operation(summary = "[테스트] 크롤러 수동 실행")
+    @PostMapping("/admin/crawl")
+    public ResponseEntity<com.hireflow.hireflow.global.common.ApiResponse<String>> crawl() {
+        jobCrawlerService.crawlSaramin();
+        return ResponseEntity.ok(com.hireflow.hireflow.global.common.ApiResponse.success("크롤러 실행 완료"));
     }
 }
