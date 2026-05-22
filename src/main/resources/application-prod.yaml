@@ -1,3 +1,8 @@
 spring:
   jpa:
     show-sql: false
+
+crawler:
+  cron:
+    saramin: "-"
+    missing-descriptions: "-"

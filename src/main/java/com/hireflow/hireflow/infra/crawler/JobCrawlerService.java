@@ -26,7 +26,7 @@ public class JobCrawlerService {
     private final OpenAiService openAiService;
 
     /** 06:00, 12:00 KST — 목록 HTML만 수집 (상세·AI 태그는 30분 뒤 배치) */
-    @Scheduled(cron = "0 0 6,12 * * *")
+    @Scheduled(cron = "${crawler.cron.saramin:0 0 6,12 * * *}")
     @Transactional
     @CacheEvict(value = {"jobPostings", "recommendations"}, allEntries = true)
     public void crawlSaramin() {
@@ -139,7 +139,7 @@ public class JobCrawlerService {
     }
 
     /** 06:30, 12:30 KST — description·기술스택 태그가 비어 있는 공고만 상세 URL 순차 조회 */
-    @Scheduled(cron = "0 30 6,12 * * *")
+    @Scheduled(cron = "${crawler.cron.missing-descriptions:0 30 6,12 * * *}")
     @Transactional
     public void updateMissingDescriptions() {
         log.info("[배치] description 없는 공고 업데이트 시작");
