@@ -52,6 +52,13 @@ jobs:
             echo "SPRING_PROFILES_ACTIVE=prod" >> /home/ec2-user/hireflow/.env
             
             sudo systemctl restart hireflow
+
+      - name: Health check
+        run: |
+          echo "Waiting for app to start..."
+          sleep 30
+          curl --fail --retry 5 --retry-delay 5 \
+            http://43.202.137.232:8080/actuator/health
             
       - name: Discord 배포 성공 알림
         if: success()
