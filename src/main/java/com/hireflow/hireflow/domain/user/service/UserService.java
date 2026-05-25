@@ -1,5 +1,6 @@
 package com.hireflow.hireflow.domain.user.service;
 
+import com.hireflow.hireflow.domain.match.MatchService;
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.dto.TechStackConfirmRequestDto;
 import com.hireflow.hireflow.domain.user.dto.UserResponseDto;
@@ -8,6 +9,7 @@ import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.global.exception.NotFoundException;
 import com.hireflow.hireflow.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final ApplicationEventPublisher eventPublisher;
+    private final MatchService matchService;
 
     // 내 프로필 조회
     public UserResponseDto getMe(Long userId) {
@@ -55,10 +58,12 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "recommendations", key = "'rec_' + #userId")
     public UserResponseDto confirmTechStack(Long userId, TechStackConfirmRequestDto dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다."));
         user.confirmTechStack(dto.getTechStack());
+        matchService.calculateForUser(userId);
         return new UserResponseDto(user);
     }
 }

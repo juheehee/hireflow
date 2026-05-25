@@ -18,6 +18,8 @@ public class JobPostingResponseDto {
     private LocalDate deadline;
     private String sourceUrl;
     private String source;
+    private Integer score;
+    private String recommendationReason;
 
     public JobPostingResponseDto(JobPosting jp) {
         this.id = jp.getId();
@@ -29,5 +31,12 @@ public class JobPostingResponseDto {
         this.deadline = jp.getDeadline();
         this.sourceUrl = jp.getSourceUrl();
         this.source = jp.getSource();
+    }
+
+    // 추천 API용 생성자
+    public JobPostingResponseDto(JobPosting jp, int score, String recommendationReason) {
+        this(jp);
+        this.score = score;
+        this.recommendationReason = recommendationReason;
     }
 }

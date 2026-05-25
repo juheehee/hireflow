@@ -2,6 +2,7 @@ package com.hireflow.hireflow.infra.crawler;
 
 import com.hireflow.hireflow.domain.jobposting.JobPosting;
 import com.hireflow.hireflow.domain.jobposting.repository.JobPostingRepository;
+import com.hireflow.hireflow.domain.match.MatchService;
 import com.hireflow.hireflow.infra.ai.OpenAiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -24,12 +26,15 @@ public class JobCrawlerService {
 
     private final JobPostingRepository jobPostingRepository;
     private final OpenAiService openAiService;
+    private final MatchService matchService;
 
     /** 06:00, 12:00 KST — 목록 HTML만 수집 (상세·AI 태그는 30분 뒤 배치) */
     @Scheduled(cron = "${crawler.cron.saramin:0 0 6,12 * * *}")
     @Transactional
     @CacheEvict(value = {"jobPostings", "recommendations"}, allEntries = true)
     public void crawlSaramin() {
+        List<Long> newPostingIds = new ArrayList<>();
+
         log.info("[크롤러] 사람인 크롤링 시작");
 
         try {
@@ -111,7 +116,7 @@ public class JobCrawlerService {
                         log.warn("[크롤러] OpenAI 태그 추출 실패 — {}", e.getMessage());
                     }
 
-                    JobPosting posting = JobPosting.builder()
+                    JobPosting posting = JobPosting.builder()   // 1. 빌더로 객체 생성
                             .title(title)
                             .company(company)
                             .location(location)
@@ -123,12 +128,17 @@ public class JobCrawlerService {
                             .crawledAt(java.time.LocalDateTime.now())
                             .build();
 
-                    jobPostingRepository.save(posting);
-                    saved++;
+                    JobPosting savedPosting = jobPostingRepository.save(posting);  // 2. 저장 (반환값 받기)
+                    newPostingIds.add(savedPosting.getId()); // 3. ID 수집
+                    saved++; // 4. 카운터 증가
 
                 } catch (Exception e) {
                     log.warn("[크롤러] 공고 파싱 실패 — {}", e.getMessage());
                 }
+            }
+
+            if (! newPostingIds.isEmpty()) {
+                matchService.calculateForNewPostings(newPostingIds);
             }
 
             log.info("[크롤러] 완료 — 저장 {}건 / 중복 스킵 {}건)", saved, skipped);
