@@ -16,7 +16,7 @@
 - **이력서 파싱** : PDF 업로드 → AI 파싱 → 기술스택 자동 업데이트 (비동기)
 - **지원 현황 관리** : 지원 등록 / 상태 변경 / 메모 / 면접 날짜 관리
 - **알림** : 마감 D-3 / 면접 D-1 / 파싱 완료 이메일 알림 (JavaMailSender)
-- - **AI 자소서 코치** : 자소서 작성 초안 생성 / AI 채점 (strengths/improvements) / AI 첨삭
+- **AI 자소서 코치** : 자소서 작성 초안 생성 / AI 채점 (strengths/improvements) / AI 첨삭
 
 &nbsp;
 ## 기술 스택
