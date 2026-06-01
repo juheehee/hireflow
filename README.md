@@ -16,6 +16,7 @@
 - **이력서 파싱** : PDF 업로드 → AI 파싱 → 기술스택 자동 업데이트 (비동기)
 - **지원 현황 관리** : 지원 등록 / 상태 변경 / 메모 / 면접 날짜 관리
 - **알림** : 마감 D-3 / 면접 D-1 / 파싱 완료 이메일 알림 (JavaMailSender)
+- - **AI 자소서 코치** : 자소서 작성 초안 생성 / AI 채점 (strengths/improvements) / AI 첨삭
 
 &nbsp;
 ## 기술 스택
@@ -163,7 +164,7 @@ com.hireflow.hireflow
 | Actuator | 1       |
 | JobPosting | 6       |
 | Application | 7       |
-| CoverLetter | 0       |
+| CoverLetter | 7       |
 | Notification | 3       |
 
 &nbsp;
@@ -240,6 +241,11 @@ docker-compose up -d
 - **원인**: `@Scheduled` 메서드는 기본적으로 트랜잭션이 없어 Lazy Loading 시도 시 DB 연결 불가
 - **해결**: `sendDeadlineReminders()`, `sendInterviewReminders()`에 `@Transactional` 추가
 
+### AI 첨삭 결과가 원본 content를 덮어쓰는 문제
+- **증상**: 첨삭 API 호출 후 aiFeedback이 null, content가 변경됨
+- **원인**: updateFeedback()이 this.aiFeedback 대신 this.content를 수정하도록 구현됨
+- **해결**: this.content → this.aiFeedback으로 수정, 원본 보존 + 첨삭본 분리 저장
+
 &nbsp;
 ## Git Convention
 
@@ -271,4 +277,4 @@ docker-compose up -d
 &nbsp;
 ---
 
-> 👩‍💻 개발자 : 이주희 · [GitHub](https://github.com/juheehee) · [Blog](https://bloggerddori.tistory.com/)
+> 👩‍💻 개발자 : 이주희 · [GitHub](https://github.com/juheehee) · [Blog](https://velog.io/@juhuihee/posts)
