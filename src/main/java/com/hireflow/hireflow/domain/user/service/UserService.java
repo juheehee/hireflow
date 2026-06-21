@@ -54,7 +54,7 @@ public class UserService {
     public String getResumeParseStatus(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("유저를 찾을 수 없습니다."));
-        return user.getResumeParseStatus();
+        return user.getResumeParseStatus().name();
     }
 
     @Transactional

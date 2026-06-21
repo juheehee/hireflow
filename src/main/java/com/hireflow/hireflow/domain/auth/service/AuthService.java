@@ -3,6 +3,7 @@ package com.hireflow.hireflow.domain.auth.service;
 import com.hireflow.hireflow.domain.auth.dto.LoginRequest;
 import com.hireflow.hireflow.domain.auth.dto.LoginResponse;
 import com.hireflow.hireflow.domain.auth.dto.SignupRequest;
+import com.hireflow.hireflow.domain.user.ResumeParseStatus;
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.global.security.JwtTokenProvider;
@@ -37,7 +38,7 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .techStack(request.getTechStack())
-                .resumeParseStatus("NONE")
+                .resumeParseStatus(ResumeParseStatus.NONE)
                 .createdAt(LocalDateTime.now())
                 .build();
 

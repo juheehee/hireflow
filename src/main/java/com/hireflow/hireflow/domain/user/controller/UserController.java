@@ -51,7 +51,7 @@ public class UserController {
                 com.hireflow.hireflow.global.common.ApiResponse.success(userService.uploadResume(userDetails.getId(), file)));
     }
 
-    @Operation(summary = "이력서 파싱 상태 조회", description = "AI 이력서 파싱 진행 상태를 반환합니다. NONE / PENDING / COMPLETED")
+    @Operation(summary = "이력서 파싱 상태 조회", description = "AI 이력서 파싱 진행 상태를 반환합니다. NONE / PENDING / COMPLETED / FAILED")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "상태 조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패")

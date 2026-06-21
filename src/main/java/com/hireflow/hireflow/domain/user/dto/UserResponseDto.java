@@ -21,6 +21,6 @@ public class UserResponseDto {
         this.name = user.getName();
         this.techStack = user.getTechStack();
         this.resumeUrl = user.getResumeUrl();
-        this.resumeParseStatus = user.getResumeParseStatus();
+        this.resumeParseStatus = user.getResumeParseStatus().name();
     }
 }

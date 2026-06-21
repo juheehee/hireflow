@@ -33,8 +33,8 @@ public class User {
 
     private String resumeUrl;        // S3 URL, 업로드 전엔 null
 
-    @Column(nullable = false)
-    private String resumeParseStatus; // NONE / PENDING / COMPLETED
+    @Enumerated(EnumType.STRING)
+    private ResumeParseStatus resumeParseStatus; // NONE / PENDING / COMPLETED / FAILED
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -43,13 +43,18 @@ public class User {
 
     public void uploadResume(String resumeUrl) {
         this.resumeUrl = resumeUrl;
-        this.resumeParseStatus = "PENDING";
+        this.resumeParseStatus = ResumeParseStatus.PENDING;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void completeResumeParsing(String parsedTechStack) {
         this.techStack = parsedTechStack;
-        this.resumeParseStatus = "COMPLETED";
+        this.resumeParseStatus = ResumeParseStatus.COMPLETED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void failResumeParsing() {
+        this.resumeParseStatus = ResumeParseStatus.FAILED;
         this.updatedAt = LocalDateTime.now();
     }
 
