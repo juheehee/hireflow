@@ -5,6 +5,8 @@ import com.hireflow.hireflow.domain.notification.repository.NotificationReposito
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.infra.ai.OpenAiService;
+import com.hireflow.hireflow.infra.pdf.PdfParserService;
+import com.hireflow.hireflow.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -18,6 +20,8 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ResumeParsingEventListener {
 
+    private final S3Service s3Service;
+    private final PdfParserService pdfService;
     private final UserRepository userRepository;
     private final OpenAiService openAiService;
     private final NotificationRepository notificationRepository;
@@ -25,24 +29,25 @@ public class ResumeParsingEventListener {
     @Async
     @EventListener
     public void handleResumeUploaded(ResumeUploadedEvent event) {
+
         try {
-            // 1. S3 URL에서 텍스트 추출 (MVP: URL을 텍스트로 그냥 넘김)
-            String resumeText = """
-        Java, Spring Boot, Spring Security, JPA, PostgreSQL, Redis, AWS S3, Docker
-        (이력서 파싱 MVP 버전 - 실제 PDF 추출은 추후 구현)
-        """;
+            // 1. S3에서 PDF 다운로드
+            byte[] pdfBytes = s3Service.download(event.getResumeUrl());
 
-            // 2. OpenAI로 기술스택 파싱
+            // 2. PDF에서 텍스트 추출
+            String resumeText = pdfService.extractText(pdfBytes);
+
+            // 3. OpenAI로 기술스택 파싱
             String parsedTechStack = openAiService.parseResumeToTechStack(resumeText);
-            log.info("파싱 결과: {}", parsedTechStack);
+            log.info("파싱 결과: {}",parsedTechStack);
 
-            // 3. User 업데이트
+            // 4. User 업데이트
             User user = userRepository.findById(event.getUserId())
                     .orElseThrow(() -> new RuntimeException("유저 없음"));
             user.completeResumeParsing(parsedTechStack);
             userRepository.save(user);
 
-            // 4. Notification 저장
+            // 5. Notification 저장
             Notification notification = Notification.builder()
                     .user(user)
                     .type("PARSE_COMPLETED")
@@ -53,6 +58,11 @@ public class ResumeParsingEventListener {
 
         } catch (Exception e) {
             log.error("이력서 파싱 실패: {}", e.getMessage());
+
+            userRepository.findById(event.getUserId()).ifPresent(user -> {
+                user.failResumeParsing();
+                userRepository.save(user);
+            });
         }
     }
 }

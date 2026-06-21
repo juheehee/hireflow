@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -45,5 +46,21 @@ public class S3Service {
 
         // 업로드된 파일의 S3 URL 반환
         return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/" + fileName;
+    }
+
+    public byte[] download(String resumeUrl) {
+        String key = extractKeyFromUrl(resumeUrl);
+
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+
+        return s3Client.getObjectAsBytes(request).asByteArray();
+    }
+
+    private String extractKeyFromUrl(String resumeUrl) {
+        //  URL에서 key 추출 - 시작점으로부터 처음 만나는 resumes/의 위치
+        return resumeUrl.substring(resumeUrl.indexOf("resumes/"));
     }
 }
