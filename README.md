@@ -38,7 +38,7 @@
 | Cache | Redis |
 | Crawling | Jsoup, @Scheduled |
 | AI | OpenAI API |
-| File | AWS S3 |
+| File | AWS S3, Apache PDFBox |
 | Notify | JavaMailSender |
 | Infra | Docker, AWS EC2, GitHub Actions |
 | Docs | Swagger (springdoc-openapi) |
@@ -56,10 +56,11 @@
 | @Scheduled | 별도 스케줄러 서버 없이 Spring 내에서 크롤링 주기 관리 가능                                                                                                                     |
 | ApplicationEventPublisher | 이력서 파싱을 비동기로 분리해 API 응답 지연 방지                                                                                                                             |
 | AWS S3 | 이력서 PDF 파일 저장에 적합한 오브젝트 스토리지. 직접 URL 접근 가능                                                                                                                |
+| Apache PDFBox | PDF에서 텍스트를 직접 추출해 OpenAI에 전달. URL 직접 전달 방식은 AI가 파일을 읽지 못해 불가능했음 |
 | Docker | 로컬/배포 환경 일관성 확보. docker-compose로 의존 서비스 한번에 실행                                                                                                            |
 | GitHub Actions | 코드 push 시 자동 빌드/배포. 별도 CI 서버 불필요                                                                                                                          |
 
-> 단일 서버 + 단일 서비스 구조라 Kubernetes/ArgoCD는 과한 선택.  
+> 단일 서버 + 단일 서비스 구조에서는 Kubernetes/ArgoCD 도입이 오버엔지니어링이라고 판단.  
 > GitHub Actions + systemd 조합으로 충분한 자동화 달성.
 
 &nbsp;
@@ -94,7 +95,7 @@ flowchart TD
     Repository --> RDS
     Service -->|"캐싱"| Redis
     Service -->|"PDF 저장"| S3
-    Service -->|"비동기 파싱"| OpenAI
+    Service -->|"PDF 다운로드 → 텍스트 추출 → 파싱"| OpenAI
     Service -->|"알림 발송"| Mail
     Scheduler -->|"06:00, 12:00 KST"| Saramin
     Saramin -->|"공고 저장"| Service
@@ -148,6 +149,7 @@ com.hireflow.hireflow
     ├── ai
     ├── crawler
     ├── mail
+    ├── pdf
     └── s3
 ```
 
@@ -245,6 +247,15 @@ docker-compose up -d
 - **증상**: 첨삭 API 호출 후 aiFeedback이 null, content가 변경됨
 - **원인**: updateFeedback()이 this.aiFeedback 대신 this.content를 수정하도록 구현됨
 - **해결**: this.content → this.aiFeedback으로 수정, 원본 보존 + 첨삭본 분리 저장
+
+### 이력서 파싱 MVP의 고정 텍스트 한계
+- **증상**: 파싱 결과가 업로드 파일과 무관하게 항상 동일한 고정 텍스트 기반으로 반환
+- **원인**: 3주 MVP 일정상 파이프라인 흐름 검증에 집중, 실제 PDF 텍스트 추출은 의도적으로 보류 /
+  OpenAI Chat Completions API는 텍스트만 처리하므로 URL을 직접 전달해도 파일을 읽지 못함
+- **해결**: Apache PDFBox로 S3에서 다운로드한 PDF의 실제 텍스트를 추출해 AI에 전달,
+  파싱 실패 시 FAILED 상태로 별도 추적
+- **배운 점**: catch 블록 자체도 또 다른 예외를 던질 수 있음을 발견 — orElseThrow() 대신
+  ifPresent()로 전환해 예외 처리의 안전성까지 점검
 
 &nbsp;
 ## Git Convention
