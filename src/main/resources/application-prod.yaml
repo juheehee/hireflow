@@ -4,5 +4,5 @@ spring:
 
 crawler:
   cron:
-    saramin: "-"
-    missing-descriptions: "-"
+    saramin: "0 0 6,12 * * *"
+    missing-descriptions: "0 30 6,12 * * *"
