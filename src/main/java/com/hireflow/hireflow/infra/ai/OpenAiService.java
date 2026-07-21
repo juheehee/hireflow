@@ -2,6 +2,7 @@ package com.hireflow.hireflow.infra.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAiService {
 
     @Value("${openai.api.key}")
@@ -25,7 +27,7 @@ public class OpenAiService {
     @Value("${openai.api.model}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     public String extractTechStackFromJobPosting(String title, String company, String description) {
         HttpHeaders headers = new HttpHeaders();
