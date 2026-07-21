@@ -1,6 +1,7 @@
 package com.hireflow.hireflow.domain.application.repository;
 
 import com.hireflow.hireflow.domain.application.Application;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -15,8 +16,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     boolean existsByUserIdAndJobPostingId(Long userId, Long jobPostingId);
 
     // 마감 3일 남은 공고 가진 지원 목록 조회
+    @EntityGraph(attributePaths = {"user", "jobPosting"})
     List<Application> findByJobPosting_DeadlineAndStatusNot(LocalDate deadline, String status);
 
     // 면접 하루 전 지원 목록 조회
+    @EntityGraph(attributePaths = {"user", "jobPosting"})
     List<Application> findByInterviewDateAndStatusNot(LocalDate interviewDate, String status);
 }
