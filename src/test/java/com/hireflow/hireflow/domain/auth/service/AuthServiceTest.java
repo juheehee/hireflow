@@ -1,20 +1,22 @@
 package com.hireflow.hireflow.domain.auth.service;
 
 import com.hireflow.hireflow.domain.auth.dto.SignupRequest;
+import com.hireflow.hireflow.domain.user.ResumeParseStatus;
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.global.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -42,7 +44,12 @@ public class AuthServiceTest {
         authService.signup(request);
 
         // Then
-        verify(userRepository).save(any(User.class));
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        User saved = captor.getValue();
+        assertThat(saved.getEmail()).isEqualTo("test@test.com");
+        assertThat(saved.getPasswordHash()).isEqualTo("hashed_password");
+        assertThat(saved.getResumeParseStatus()).isEqualTo(ResumeParseStatus.NONE);
     }
 
     @Test
@@ -55,5 +62,7 @@ public class AuthServiceTest {
         assertThatThrownBy(() -> authService.signup(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("이미 사용 중인 이메일입니다.");
+
+        verify(userRepository, never()).save(any());
     }
 }
