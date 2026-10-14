@@ -56,7 +56,7 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
-        // Redis에 refreshToken에 저장 (key: "refresh: {email}", TTL: 7일"
+        // Redis에 refreshToken 저장 (key: "refresh:{email}", TTL: 7일)
         redisTemplate.opsForValue().set(
                 "refresh:" + user.getEmail(),
                 refreshToken,
