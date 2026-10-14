@@ -215,6 +215,20 @@ public class AuthServiceTest {
     }
 
     @Test
+    void 토큰재발급_실패_빈_토큰() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken(""))
+                .thenThrow(new IllegalArgumentException("empty"));
+
+        // When & Then
+        assertThatThrownBy(() -> authService.refresh(""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 refreshToken입니다.");
+
+        verifyNoInteractions(redisTemplate);
+    }
+
+    @Test
     void 로그아웃_성공() {
         // Given
         when(jwtTokenProvider.getEmailFromToken("valid-refresh-token")).thenReturn("test@test.com");
@@ -233,6 +247,16 @@ public class AuthServiceTest {
 
         // When & Then
         assertThatCode(() -> authService.logout("invalid-token")).doesNotThrowAnyException();
+        verifyNoInteractions(redisTemplate);
+    }
+
+    @Test
+    void 로그아웃_빈_토큰() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("")).thenThrow(new IllegalArgumentException("empty"));
+
+        // When & Then
+        assertThatCode(() -> authService.logout("")).doesNotThrowAnyException();
         verifyNoInteractions(redisTemplate);
     }
 }
