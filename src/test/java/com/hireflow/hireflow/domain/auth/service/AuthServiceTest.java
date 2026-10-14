@@ -7,6 +7,8 @@ import com.hireflow.hireflow.domain.user.ResumeParseStatus;
 import com.hireflow.hireflow.domain.user.User;
 import com.hireflow.hireflow.domain.user.repository.UserRepository;
 import com.hireflow.hireflow.global.security.JwtTokenProvider;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -137,5 +139,79 @@ public class AuthServiceTest {
                 .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다.");
 
         verifyNoInteractions(jwtTokenProvider,redisTemplate);
+    }
+
+    @Test
+    void 토큰재발급_성공() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("valid-refresh-token")).thenReturn("test@test.com");
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("refresh:test@test.com")).thenReturn("valid-refresh-token");
+        when(jwtTokenProvider.generateAccessToken("test@test.com")).thenReturn("new-access-token");
+
+        // When
+        String result = authService.refresh("valid-refresh-token");
+
+        // Then
+        assertThat(result).isEqualTo("new-access-token");
+        verify(jwtTokenProvider).generateAccessToken("test@test.com");
+    }
+
+    @Test
+    void 토큰재발급_실패_만료된_토큰() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("expired-token")).thenThrow(mock(ExpiredJwtException.class));
+
+        // When & Then
+        assertThatThrownBy(() -> authService.refresh("expired-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("refreshToken이 만료되었습니다. 다시 로그인해주세요.");
+
+        verifyNoInteractions(redisTemplate);
+    }
+
+    @Test
+    void 토큰재발급_실패_유효하지_않은_토큰() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("invalid-token")).thenThrow(new JwtException("invalid"));
+
+        // When & Then
+        assertThatThrownBy(() -> authService.refresh("invalid-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 refreshToken입니다.");
+
+        verifyNoInteractions(redisTemplate);
+    }
+
+    @Test
+    void 토큰재발급_실패_Redis에_토큰_없음() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("logged-out-token")).thenReturn("test@test.com");
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("refresh:test@test.com")).thenReturn(null);
+
+
+        // When & Then
+        assertThatThrownBy(() -> authService.refresh("logged-out-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("이미 로그아웃된 토큰입니다.");
+
+        verify(jwtTokenProvider, never()).generateAccessToken(any());
+
+    }
+
+    @Test
+    void 토큰재발급_실패_Redis_토큰_불일치() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("old-token")).thenReturn("test@test.com");
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("refresh:test@test.com")).thenReturn("new-token");
+
+        // When & Then
+        assertThatThrownBy(() -> authService.refresh("old-token"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("이미 로그아웃된 토큰입니다.");
+
+        verify(jwtTokenProvider, never()).generateAccessToken(any());
     }
 }
