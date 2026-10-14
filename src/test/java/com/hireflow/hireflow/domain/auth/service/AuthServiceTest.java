@@ -22,8 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -213,5 +212,27 @@ public class AuthServiceTest {
                 .hasMessage("이미 로그아웃된 토큰입니다.");
 
         verify(jwtTokenProvider, never()).generateAccessToken(any());
+    }
+
+    @Test
+    void 로그아웃_성공() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("valid-refresh-token")).thenReturn("test@test.com");
+
+        // When
+        authService.logout("valid-refresh-token");
+
+        // Then
+        verify(redisTemplate).delete("refresh:test@test.com");
+    }
+
+    @Test
+    void 로그아웃_토큰파싱_실패() {
+        // Given
+        when(jwtTokenProvider.getEmailFromToken("invalid-token")).thenThrow(new JwtException("invalid"));
+
+        // When & Then
+        assertThatCode(() -> authService.logout("invalid-token")).doesNotThrowAnyException();
+        verifyNoInteractions(redisTemplate);
     }
 }
