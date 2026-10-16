@@ -156,6 +156,8 @@ com.hireflow.hireflow
 &nbsp;
 ## API 명세
 
+> ⚠️ 비용 절감을 위해 현재 서버를 중지한 상태입니다.
+
 - **배포 주소** : http://43.202.137.232:8080
 - **Swagger** : http://43.202.137.232:8080/swagger-ui/index.html
 
